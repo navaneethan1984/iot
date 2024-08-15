@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mahindra Transmission Test Rig Dashboard</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        #sensor-container .card {
+            margin-bottom: 10px;
+        }
+        #error-message {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h1>Mahindra Transmission Test Rig Dashboard</h1>
+        <div id="error-message" style="display: none;"></div>
+        <div id="sensor-container" class="row mt-4"></div>
+    </div>
+
+    <script>
+        async function fetchSensorData() {
+            try {
+                const response = await fetch('http://192.168.1.4:4000/get_data');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const text = await response.text();
+                console.log('Raw response text:', text);
+
+                try {
+                    const jsonData = JSON.parse(text);
+                    console.log('Parsed JSON data:', jsonData);
+
+                    displaySensorData(jsonData);
+                } catch (e) {
+                    console.error('Failed to parse JSON:', e);
+                    showError('Failed to process sensor data.');
+                }
+            } catch (e) {
+                console.error('Error during fetch:', e);
+                showError('Error fetching sensor data: ' + e.message);
+            }
+        }
+
+        function displaySensorData(sensorData) {
+            const sensorContainer = document.getElementById('sensor-container');
+            sensorContainer.innerHTML = '';  // Clear previous content
+
+            // Create grid layout for sensor data
+            for (const [key, value] of Object.entries(sensorData)) {
+                sensorContainer.innerHTML += `
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">${key}</h5>
+                            <p class="card-text">${value}</p>
+                        </div>
+                    </div>
+                </div>
+                `;
+            }
+        }
+
+        function showError(message) {
+            const errorMessage = document.getElementById('error-message');
+            errorMessage.innerText = message;
+            errorMessage.style.display = 'block';
+        }
+
+        // Fetch data every 1 second
+        setInterval(fetchSensorData, 1000);
+    </script>
+</body>
+</html>
